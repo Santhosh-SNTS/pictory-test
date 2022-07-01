@@ -8,62 +8,62 @@ terraform {
 }
 
 provider "aws" {
-    region = "ap-south-1"
+    region = var.aws_region
 }
 
 resource "aws_vpc" "EC2VPC" {
-    cidr_block = "172.31.0.0/16"
+    cidr_block = var.vpc_cidr
     enable_dns_support = true
     enable_dns_hostnames = true
     instance_tenancy = "default"
     tags = {
-        Name = "vpc-us-e2-pictory"
+        Name = var.resource_name["vpc"]
     }
 }
 
 resource "aws_subnet" "EC2Subnet1" {
-    availability_zone = "ap-south-1a"
-    cidr_block = "172.31.0.0/24"
+    availability_zone = var.aws_az["az_one"]
+    cidr_block = var.vpc_subnet["az_one_public"]
     vpc_id = "${aws_vpc.EC2VPC.id}"
     map_public_ip_on_launch = true
     tags = {
-        Name = "vpc-us-e2-pictory_Public"
+        Name = var.resource_name["public_subnet"]
     }
 }
 
 resource "aws_subnet" "EC2Subnet2" {
-    availability_zone = "ap-south-1b"
-    cidr_block = "172.31.1.0/24"
+    availability_zone = var.aws_az["az_two"]
+    cidr_block = var.vpc_subnet["az_two_public"]
     vpc_id = "${aws_vpc.EC2VPC.id}"
     map_public_ip_on_launch = true
     tags = {
-        Name = "vpc-us-e2-pictory_Public"
-    }
-}
-
-resource "aws_subnet" "EC2Subnet4" {
-    availability_zone = "ap-south-1a"
-    cidr_block = "172.31.3.0/24"
-    vpc_id = "${aws_vpc.EC2VPC.id}"
-    map_public_ip_on_launch = false
-    tags = {
-        Name = "vpc-us-e2-pictory_Private"
+        Name = var.resource_name["public_subnet"]
     }
 }
 
 resource "aws_subnet" "EC2Subnet3" {
-    availability_zone = "ap-south-1b"
-    cidr_block = "172.31.2.0/24"
+    availability_zone = var.aws_az["az_one"]
+    cidr_block = var.vpc_subnet["az_one_private"]
     vpc_id = "${aws_vpc.EC2VPC.id}"
     map_public_ip_on_launch = false
     tags = {
-        Name = "vpc-us-e2-pictory_Private"
+        Name = var.resource_name["private_subnet"]
+    }
+}
+
+resource "aws_subnet" "EC2Subnet4" {
+    availability_zone = var.aws_az["az_two"]
+    cidr_block = var.vpc_subnet["az_two_private"]
+    vpc_id = "${aws_vpc.EC2VPC.id}"
+    map_public_ip_on_launch = false
+    tags = {
+        Name = var.resource_name["private_subnet"]
     }
 }
 
 resource "aws_internet_gateway" "EC2InternetGateway" {
     tags = {
-        Name = "vpc-us-e2-pictory"
+        Name = var.resource_name["internet_gateway"]
     }
     vpc_id = "${aws_vpc.EC2VPC.id}"
 }
@@ -74,7 +74,7 @@ resource "aws_internet_gateway" "EC2InternetGateway" {
 # }
 
 resource "aws_vpc_dhcp_options" "EC2DHCPOptions" {
-    domain_name = "ap-south-1.compute.internal"
+    domain_name = "us-east-2.compute.internal"
 }
 resource "aws_vpc_dhcp_options_association" "EC2VPCDHCPOptionsAssociation" {
     dhcp_options_id = aws_vpc_dhcp_options.EC2DHCPOptions.id
@@ -85,7 +85,7 @@ resource "aws_vpc_dhcp_options_association" "EC2VPCDHCPOptionsAssociation" {
 resource "aws_route_table" "EC2RouteTable1" {
     vpc_id = "${aws_vpc.EC2VPC.id}"
     tags = {
-        Name = "vpc-us-e2-pictory_Public"
+        Name = var.resource_name["public_route_table"]
     }
 }
 
@@ -93,7 +93,7 @@ resource "aws_route_table" "EC2RouteTable1" {
 resource "aws_route_table" "EC2RouteTable2" {
     vpc_id = aws_vpc.EC2VPC.id
     tags = {
-        Name = "vpc-us-e2-pictory_Private"
+        Name = var.resource_name["private_route_table"]
     }
 }
 
@@ -149,7 +149,7 @@ resource "aws_route_table_association" "EC2SubnetRouteTableAssociation4" {
 resource "aws_eip" "elasticIP1" {
   vpc      = true
   tags = {
-    Name = "NAT-EIP"
+    Name = var.resource_name["nat_elastic_ip"]
   }
 }
 #NAT_gateway
@@ -164,7 +164,7 @@ resource "aws_nat_gateway" "EC2NatGateway" {
 resource "aws_vpc_endpoint" "EC2VPCEndpoint" {
     vpc_endpoint_type = "Gateway"
     vpc_id = aws_vpc.EC2VPC.id
-    service_name = "com.amazonaws.ap-south-1.s3"
+    service_name = "com.amazonaws.us-east-2.s3"
     policy = "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}"
     route_table_ids = [
         aws_route_table.EC2RouteTable3.id,
