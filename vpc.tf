@@ -155,7 +155,6 @@ resource "aws_eip" "elasticIP1" {
 #NAT_gateway
 resource "aws_nat_gateway" "EC2NatGateway" {
   subnet_id = aws_subnet.EC2Subnet1.id
-
   allocation_id = aws_eip.elasticIP1.id
 }
 
